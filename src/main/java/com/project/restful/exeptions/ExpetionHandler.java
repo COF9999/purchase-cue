@@ -1,6 +1,7 @@
 package com.project.restful.exeptions;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,15 @@ public class ExpetionHandler {
     })
     @ResponseBody
     public ErrorMessage notFound(HttpServletRequest request,Exception exception){
+        return new ErrorMessage(exception,request.getRequestURI());
+    }
+
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler({
+            IllegalArgumentException.class
+    })
+    @ResponseBody
+    public ErrorMessage unauthorized(HttpServletRequest request,Exception exception){
         return new ErrorMessage(exception,request.getRequestURI());
     }
 }
