@@ -1,6 +1,7 @@
 package com.project.restful.suppliers;
 
 import com.project.restful.exeptions.BadRequestExeption;
+import com.project.restful.interfaces.FileUpload;
 import com.project.restful.models.Users;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,9 +13,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@AllArgsConstructor
+
 @Component
-public class FileUpload {
+public class SaveImageLocal implements FileUpload {
 
     private static final String BASE_UPLOAD_DIR = "/home/christian09/Documents/NUCLEAR-CUE-5/restful/src/main/resources/static/images";
     private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList("image/jpeg", "image/png","image/jpg");
