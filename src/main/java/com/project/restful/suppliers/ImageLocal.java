@@ -3,7 +3,7 @@ package com.project.restful.suppliers;
 import com.project.restful.exeptions.BadRequestExeption;
 import com.project.restful.interfaces.FileUpload;
 import com.project.restful.models.Users;
-import lombok.AllArgsConstructor;
+import com.project.restful.suppliers.objects.FileUploadResponseDto;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
@@ -14,13 +14,13 @@ import java.util.List;
 import java.util.Objects;
 
 
-@Component
-public class SaveImageLocal implements FileUpload {
+@Component(value = "LOCAL")
+public class ImageLocal implements FileUpload {
 
     private static final String BASE_UPLOAD_DIR = "/home/christian09/Documents/NUCLEAR-CUE-5/restful/src/main/resources/static/images";
     private static final List<String> ALLOWED_FILE_TYPES = Arrays.asList("image/jpeg", "image/png","image/jpg");
 
-    public String uploadFile(MultipartFile file,
+    public FileUploadResponseDto uploadFile(MultipartFile file,
                              String newFileName,
                             Users users) {
 
@@ -59,7 +59,6 @@ public class SaveImageLocal implements FileUpload {
 
             // Save the file to the specified directory
             String filePath = Paths.get(fullDirPath, sanitizedFileName).toString();
-            System.out.println(dirReturn);
             File newFile = new File(filePath);
             if (newFile.exists()) {
                 throw new BadRequestExeption("File already exists with the same name");
@@ -67,7 +66,7 @@ public class SaveImageLocal implements FileUpload {
 
             file.transferTo(new File(filePath));
 
-            return dirReturn;
+             return new FileUploadResponseDto(dirReturn,false);
 
         } catch (IOException e) {
             e.printStackTrace();

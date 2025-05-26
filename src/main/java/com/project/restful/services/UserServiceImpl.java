@@ -5,11 +5,13 @@ import com.project.restful.Repository.interfacesLogic.TokenDao;
 import com.project.restful.Repository.interfacesLogic.UserDao;
 import com.project.restful.dtos.security.AuthenticationResponseDTO;
 import com.project.restful.dtos.user.UserDto;
+import com.project.restful.dtos.user.UserDtoChatComment;
 import com.project.restful.dtos.user.UserInformation;
 import com.project.restful.dtos.user.UserResponse;
 import com.project.restful.enums.Role;
 import com.project.restful.exeptions.BadRequestExeption;
 import com.project.restful.exeptions.NotFoundException;
+import com.project.restful.globalbeans.SpringConfigBeans;
 import com.project.restful.models.Tokens;
 import com.project.restful.models.Users;
 import com.project.restful.security.JwtService;
@@ -18,10 +20,13 @@ import com.project.restful.services.interfacesLogic.ProductService;
 import com.project.restful.services.interfacesLogic.UserService;
 import com.project.restful.utils.Validation;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +50,11 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
 
     private TokenDao tokenDao;
 
+    private final RestTemplate restTemplate;
+
+    private final String baseUriMicroComments = "/user";
+
+
 
     /**
      * Recupera una lista de todos los usuarios.
@@ -65,7 +75,7 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
      */
     public UserResponse search(Long id) {
         Users user = userDaoCrud.get(id).orElseThrow();
-        return createResponse(user);
+        return createResponseFormal(user);
     }
 
 
@@ -82,13 +92,21 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
              Optional<Users> personaNew = userDaoCrud.create(datosCrear);
              if (personaNew.isPresent()) {
                  String token = jwtService.generateToken(personaNew.get());
+                 Users users = personaNew.get();
+                 try {
+                     ResponseEntity.ok(restTemplate.postForObject(SpringConfigBeans.urlBaseMicroComments+baseUriMicroComments,
+                             new UserDtoChatComment(null,Long.valueOf(users.getIdentification()),users.getName()),
+                             Void.class));
+                 }catch (Exception e){
+                     throw new BadRequestExeption("Error creating person chat");
+                 }
+
                  return new UserResponse(
                          datosCrear,
                          new AuthenticationResponseDTO(token)
                  );
              }
          }
-
         throw new BadRequestExeption("Persona con cedula repetida");
     }
 
@@ -116,7 +134,6 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
      * Inicio de sesión del usuario usando un token
      */
     public UserResponse autenticar(UserDto personaDTO) {
-
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(personaDTO.identification(), personaDTO.password()));
             Users user = userDao
@@ -140,7 +157,6 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
             }
 
         }catch (Exception e){
-            System.out.println();
             System.out.println("ERROR " +e.getMessage());
         }
         return null;
@@ -184,18 +200,13 @@ public class UserServiceImpl implements ServiceCrud<UserResponse,UserDto>, UserS
      * @return UserResponse del usuario eliminado.
      */
     public UserResponse delete(Long id) {
-        return createResponse(userDaoCrud.delete(id));
+        return userDaoCrud.delete(id)
+                .map(this::createResponseFormal)
+                .orElseThrow();
     }
 
 
-    /**
-     * Crea un objeto UserResponse a partir de un objeto dado.
-     *
-     * @param object Objeto a partir del cual crear UserResponse.
-     * @return UserResponse creado.
-     */
-    public UserResponse createResponse(Object object) {
-        Users user = (Users) object;
+    public UserResponse createResponseFormal(Users user) {
         return new UserResponse(user,null);
     }
 }

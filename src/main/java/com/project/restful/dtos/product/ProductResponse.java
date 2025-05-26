@@ -7,6 +7,7 @@ public record ProductResponse(Long id,
                               String name,
                               String img,
                               String description,
-                              int owners
+                              int owners,
+                              boolean isCloudImage
                               ) {
 }

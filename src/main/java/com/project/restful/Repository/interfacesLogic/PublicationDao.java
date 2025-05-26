@@ -14,4 +14,6 @@ public interface PublicationDao {
 
     Optional<Publications> searchPublicationById(Long id);
 
+    List<Publications> verifyIsProductIsInPublication(Long id);
+
 }

@@ -5,38 +5,54 @@ import com.project.restful.Repository.interfacesLogic.DenunciationDao;
 import com.project.restful.Repository.interfacesLogic.ProductDao;
 import com.project.restful.Repository.interfacesLogic.UserDao;
 import com.project.restful.dtos.auth.TokenDto;
-import com.project.restful.dtos.denunciation.DenunciationDto;
 import com.project.restful.dtos.product.ProductDto;
 import com.project.restful.dtos.product.ProductResponse;
 import com.project.restful.exeptions.BadRequestExeption;
 import com.project.restful.exeptions.NotFoundException;
+import com.project.restful.interfaces.FileUpload;
 import com.project.restful.models.Products;
 import com.project.restful.models.Users;
 import com.project.restful.security.JwtService;
 import com.project.restful.services.interfacesCrud.ServiceCrud;
-import com.project.restful.services.interfacesLogic.DenunciatorService;
 import com.project.restful.services.interfacesLogic.ProductService;
-import com.project.restful.suppliers.FileUpload;
+import com.project.restful.suppliers.aws.S3aws;
+import com.project.restful.suppliers.objects.FileUploadResponseDto;
 import io.jsonwebtoken.Claims;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+
+
 import java.util.List;
 
 @Service
-@AllArgsConstructor
 public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductDto>,ProductService {
 
-    private DaoCrud<Products> productsDaoCrud;
+    private final DaoCrud<Products> productsDaoCrud;
 
-    private ProductDao productDao;
+    private final ProductDao productDao;
 
-    private UserDao userDao;
+    private final UserDao userDao;
 
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
-    private FileUpload fileUpload;
+    private final FileUpload fileUpload;
 
-    private DenunciationDao denunciatorDao;
+    private final DenunciationDao denunciatorDao;
+
+    public ProductServiceImpl(DaoCrud<Products> productsDaoCrud,
+                              ProductDao productDao,
+                              UserDao userDao,
+                              JwtService jwtService,
+                              @Qualifier(value = "S3") FileUpload fileUpload,
+                              DenunciationDao denunciatorDao){
+        this.productsDaoCrud = productsDaoCrud;
+        this.productDao = productDao;
+        this.userDao = userDao;
+        this.jwtService = jwtService;
+        this.fileUpload = fileUpload;
+        this.denunciatorDao = denunciatorDao;
+
+    }
 
 
     @Override
@@ -51,8 +67,7 @@ public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductD
      */
     @Override
     public ProductResponse search(Long id) {
-
-        return createResponse(productsDaoCrud.get(id).orElseThrow());
+        return createResponseFormal(productsDaoCrud.get(id).orElseThrow());
     }
 
     /**
@@ -74,18 +89,20 @@ public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductD
         }
 
 
-        String pathImg = fileUpload.uploadFile(object.multipartFile(),object.newFileName(),user);
+        FileUploadResponseDto fileUploadResponseDto = fileUpload.uploadFile(object.multipartFile(),object.newFileName(),user);
+
         product.setName(object.name());
         product.setCategory(object.category());
         product.setDescription(object.description());
         product.setPrice((double) object.price());
         product.setCondition(object.condition());
-        product.setImg(pathImg);
+        product.setImg(fileUploadResponseDto.pathImage());
         product.setOwners(1);
         product.setDeleted(false);
         product.setIsChanged(false);
         product.setUser(user);
-        return createResponse(productsDaoCrud.create(product).orElseThrow(()-> new BadRequestExeption("No fue posible guardar el producto")));
+        product.setIsCloud(fileUploadResponseDto.isCloud());
+        return createResponseFormal(productsDaoCrud.create(product).orElseThrow(()-> new BadRequestExeption("No fue posible guardar el producto")));
     }
 
     /**
@@ -104,7 +121,9 @@ public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductD
         product.setPrice((double) object.price());
         product.setCondition(object.condition());
         product.setImg(object.imageUrl());
-        return createResponse(productsDaoCrud.update(product));
+        return productsDaoCrud.update(product)
+                .map(this::createResponseFormal)
+                .orElseThrow();
     }
 
     /**
@@ -117,7 +136,7 @@ public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductD
     public ProductResponse delete(Long id) {
         Products product = productsDaoCrud.get(id).orElseThrow();
         product.setDeleted(true);
-        return createResponse(productsDaoCrud.update(product));
+        return productsDaoCrud.update(product).map(this::createResponseFormal).orElseThrow();
     }
 
     /**
@@ -132,21 +151,23 @@ public class ProductServiceImpl implements ServiceCrud<ProductResponse, ProductD
 
          return productDao.allProductOfUser(identification,false)
                  .stream()
-                 .map(this::createResponse)
+                 .map(this::createResponseFormal)
                  .toList();
     }
 
 
-    /**
-     * Crea un objeto ProductResponse a partir de un objeto dado.
-     *
-     * @param object Objeto a partir del cual crear ProductResponse.
-     * @return ProductResponse creado.
-     */
-    @Override
-    public ProductResponse createResponse(Object object) {
-        Products product = (Products) object;
-        return new ProductResponse(product.getId(),product.getCategory(),product.getPrice(),product.getCondition(),product.getName(),product.getImg(),product.getDescription(),product.getOwners());
+    public ProductResponse createResponseFormal(Products product) {
+        return new ProductResponse(product.getId(),
+                product.getCategory(),
+                product.getPrice(),
+                product.getCondition(),
+                product.getName(),
+                product.getImg(),
+                product.getDescription(),
+                product.getOwners(),
+                product.getIsCloud()
+        );
     }
+
 
 }

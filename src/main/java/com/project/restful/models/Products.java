@@ -23,6 +23,9 @@ public class Products {
     private int owners;
     private Boolean deleted;
 
+    @Column(name = "is_cloud")
+    private Boolean isCloud;
+
     @Column(name = "is_changed")
     private Boolean isChanged;
     @ManyToOne

@@ -4,13 +4,9 @@ package com.project.restful.controllers;
 import com.project.restful.dtos.counterOffer.CounterOfferAceptDto;
 import com.project.restful.dtos.counterOffer.CounterOfferDto;
 import com.project.restful.dtos.counterOffer.CounterOfferResponseDto;
-import com.project.restful.dtos.counterOffer.CounterOfferUpdateDto;
 import com.project.restful.dtos.transaction.TransactionalResponseDto;
-import com.project.restful.services.CounterOfferServiceImpl;
 import com.project.restful.services.interfacesLogic.CounterOfferService;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 
 

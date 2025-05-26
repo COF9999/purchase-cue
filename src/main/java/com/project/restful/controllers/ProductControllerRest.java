@@ -3,7 +3,6 @@ package com.project.restful.controllers;
 import com.project.restful.dtos.auth.TokenDto;
 import com.project.restful.dtos.product.ProductDto;
 import com.project.restful.dtos.product.ProductResponse;
-import com.project.restful.suppliers.FileUpload;
 import com.project.restful.services.interfacesCrud.ServiceCrud;
 import com.project.restful.services.interfacesLogic.ProductService;
 import lombok.AllArgsConstructor;
@@ -56,7 +55,6 @@ public class ProductControllerRest {
                 new TokenDto(token)
         );
         return productImplCrud.create(productDto);
-
 
     }
 

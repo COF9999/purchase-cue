@@ -8,5 +8,4 @@ public interface ServiceCrud<T,W> {
     T create(W object);
     T update(W object);
     T delete(Long id);
-    T createResponse(Object object);
 }
