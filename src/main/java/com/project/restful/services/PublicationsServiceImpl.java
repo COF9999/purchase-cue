@@ -3,8 +3,6 @@ package com.project.restful.services;
 import com.project.restful.Repository.interfacesCrud.DaoCrud;
 import com.project.restful.Repository.interfacesLogic.PublicationDao;
 import com.project.restful.dtos.auth.TokenDto;
-import com.project.restful.dtos.product.ProductDto;
-import com.project.restful.dtos.product.ProductResponse;
 import com.project.restful.dtos.publish.MultiConsultDto;
 import com.project.restful.dtos.publish.PublicationDataDto;
 import com.project.restful.dtos.publish.PublishDto;
@@ -17,6 +15,7 @@ import com.project.restful.models.Publications;
 import com.project.restful.models.Users;
 import com.project.restful.security.JwtService;
 import com.project.restful.services.interfacesCrud.ServiceCrud;
+import com.project.restful.services.interfacesLogic.ProductService;
 import com.project.restful.services.interfacesLogic.PublicationService;
 import com.project.restful.services.interfacesLogic.UserService;
 import com.project.restful.suppliers.PublicationFilter;
@@ -32,8 +31,7 @@ import java.util.List;
 @AllArgsConstructor
 public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,PublishDto>, PublicationService {
 
-
-    private ServiceCrud<ProductResponse, ProductDto> productsImplCrud;
+    private ProductService productService;
 
     private DaoCrud<Publications> publicationsDaoCrud;
 
@@ -57,7 +55,7 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
         return publicationsDaoCrud
                 .selectAll()
                 .stream()
-                .map(this::createResponse)
+                .map(this::createResponseFormal)
                 .toList();
     }
 
@@ -69,7 +67,9 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
      */
     @Override
     public PublishResponse search(Long id) {
-        return createResponse(publicationsDaoCrud.get(id));
+       return publicationsDaoCrud.get(id)
+                .map(this::createResponseFormal)
+                .orElseThrow();
     }
 
 
@@ -95,7 +95,7 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
         publication.setUser(user);
         publication.setStatus(StateObject.ACTIVE.getState());
         publication.setActive(true);
-        return createResponse(publicationsDaoCrud.create(publication).orElseThrow(()-> new BadRequestExeption("No fue posible crear la publicación")));
+        return createResponseFormal(publicationsDaoCrud.create(publication).orElseThrow(()-> new BadRequestExeption("No fue posible crear la publicación")));
     }
 
     /**
@@ -137,7 +137,7 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
     public List<PublishResponse> multiConsult(MultiConsultDto campus) {
         return PublicationFilter.find(publicationsDaoCrud.selectAll(),campus)
                 .stream()
-                .map(this::createResponse)
+                .map(this::createResponseFormal)
                 .toList();
     }
 
@@ -153,7 +153,7 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
         String identification = jwtService.extractClain(tokenDto.token(),Claims::getSubject);
         return publicationDao.searchAllPublicationsUser(identification)
                 .stream()
-                .map(this::createResponse)
+                .map(this::createResponseFormal)
                 .toList();
     }
 
@@ -163,23 +163,16 @@ public class PublicationsServiceImpl implements ServiceCrud<PublishResponse,Publ
                 publication.getId(),
                 publication.getDate(),
                 userService.converte(publication.getUser()),
-                productsImplCrud.createResponse(publication.getProduct())
+                productService.createResponseFormal(publication.getProduct())
         );
     }
 
-    /**
-     * Crea un objeto PublishResponse a partir de un objeto dado.
-     *
-     * @param object Objeto a partir del cual crear PublishResponse.
-     * @return PublishResponse creado.
-     */
-    @Override
-    public PublishResponse createResponse(Object object) {
-        Publications publication = (Publications) object;
+
+    public PublishResponse createResponseFormal(Publications publication) {
         return new PublishResponse(publication.getId(),
                 publication.getTitle(),
                 publication.getDate(),
                 publication.getStatus(),
-                productsImplCrud.createResponse(publication.getProduct()));
+                productService.createResponseFormal(publication.getProduct()));
     }
 }

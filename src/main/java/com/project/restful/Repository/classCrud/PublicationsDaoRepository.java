@@ -72,5 +72,11 @@ public class PublicationsDaoRepository implements DaoCrud<Publications>, Publica
         return get(id);
     }
 
+    @Override
+    public List<Publications> verifyIsProductIsInPublication(Long id) {
+        Query query = entityManager.createQuery("select p from Publications p where p.product.id = ?1");
+        query.setParameter(1,id);
+        return query.getResultList();
+    }
 
 }

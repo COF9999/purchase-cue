@@ -3,12 +3,9 @@ package com.project.restful.security.configurations;
 
 import com.project.restful.enums.Role;
 import com.project.restful.security.UserDetailsService;
-import jakarta.servlet.FilterRegistration;
-import lombok.AllArgsConstructor;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,20 +17,36 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import java.util.Arrays;
 
-@AllArgsConstructor
 @EnableWebSecurity
 @Configuration
 public class SecurityConfig {
 
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
-    private JwtAuthenticationFilter authenticationFilter;
+    private final JwtAuthenticationFilter authenticationFilter;
+
+    @Value("${config.my.local.ip}")
+    private String myLocalIp;
+
+    @Value("${config.ec2.local.ip}")
+    private String ec2LocalIp;
+
+    @Value("${config.domain.name}")
+    private String domainName;
+
+    @Value("${config.www.domain.name}")
+    private String wwwDomainName;
+
+    public SecurityConfig(UserDetailsService userDetailsService,JwtAuthenticationFilter authenticationFilter){
+        this.userDetailsService = userDetailsService;
+        this.authenticationFilter = authenticationFilter;
+    }
+
+
 
 
     
@@ -90,13 +103,19 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
+        config.addAllowedOrigin(domainName);
+        config.addAllowedOrigin(wwwDomainName);
+        config.addAllowedOrigin("http://localhost");
         config.addAllowedOrigin("http://localhost:5173");
+        config.addAllowedOrigin("http://localhost:4173");
+        config.addAllowedOrigin(String.format("http://%s",myLocalIp));
+        config.addAllowedOrigin(String.format("http://%s:5173",myLocalIp));
+        config.addAllowedOrigin(String.format("http://%s",ec2LocalIp));
+        config.addAllowedOrigin(String.format("http://%s:5173",ec2LocalIp));
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
-
-
     }
 
 

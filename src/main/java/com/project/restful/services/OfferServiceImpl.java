@@ -5,27 +5,22 @@ import com.project.restful.Repository.interfacesLogic.OfferDao;
 import com.project.restful.Repository.interfacesLogic.PublicationDao;
 import com.project.restful.Repository.interfacesLogic.UserDao;
 import com.project.restful.dtos.auth.TokenDto;
-import com.project.restful.dtos.counterOffer.CounterOfferResponseDto;
+import com.project.restful.dtos.machineLearning.MachineLearningRequestDto;
 import com.project.restful.dtos.offer.OfferDto;
 import com.project.restful.dtos.offer.OfferResponse;
 import com.project.restful.dtos.offer.OfferSuccesfullyDto;
-import com.project.restful.dtos.product.ProductDto;
-import com.project.restful.dtos.product.ProductResponse;
 import com.project.restful.enums.StateObject;
 import com.project.restful.exeptions.BadRequestExeption;
+import com.project.restful.machineLearning.MachineLearningPublication;
 import com.project.restful.models.Offers;
 import com.project.restful.models.Products;
 import com.project.restful.models.Publications;
 import com.project.restful.models.Users;
 import com.project.restful.security.JwtService;
-import com.project.restful.services.interfacesCrud.ServiceCrud;
 import com.project.restful.services.interfacesLogic.*;
 import com.project.restful.suppliers.EmailService;
 import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import java.sql.Date;
 import java.time.LocalDate;
@@ -56,6 +51,8 @@ public class OfferServiceImpl implements OfferService {
 
     private final EmailService emailService;
 
+    private final MachineLearningPublication machineLearningPublication;
+
 
     private Publications compareIdentification(Publications publicationsOpt,String identification){
         if(Objects.equals(publicationsOpt.getUser().getIdentification(), identification)){
@@ -73,19 +70,29 @@ public class OfferServiceImpl implements OfferService {
      */
     @Override
     public OfferSuccesfullyDto createOffer(OfferDto offerDto) {
+        System.out.println("entro");
         String identification = jwtService.extractClain(offerDto.tokenDto().token(), Claims::getSubject);
         Publications publications = publicationDao.searchPublicationById(offerDto.idPublication())
                         .map(publicationsOpt -> compareIdentification(publicationsOpt,identification))
                         .orElseThrow();
 
         Products product = null;
+        System.out.println("entro");
+        System.out.println(offerDto.idProduct());
         if(offerDto.idProduct()!=null){
             product = productsDaoCrud.get(offerDto.idProduct()).orElseThrow(()-> new BadRequestExeption("No fue posible encontrar un producto enlazado"));
+
+            int size = publicationDao.verifyIsProductIsInPublication(product.getId()).size();
+            if (size !=0){
+                throw new BadRequestExeption("Este producto esta publicado no puedes intercambiarlo");
+            };
         }
 
         if(!offerDao.findUserInOffer(offerDto.idPublication(),identification).isEmpty()){
             throw new BadRequestExeption("Ya tienes una oferta a este producto");
         }
+
+
 
         Users user = userDao.findByIdentification(identification)
                 .map(userObj-> (Users) userObj)
@@ -100,6 +107,8 @@ public class OfferServiceImpl implements OfferService {
         offers.setState(StateObject.ACTIVE.getState());
         offers.setIsCounterOffer(false);
         offersDaoCrud.create(offers).orElseThrow(()-> new BadRequestExeption("No fue posible crear la oferta"));
+        Products publicationProduct = publications.getProduct();
+        machineLearningPublication.feedMachineLearningModel(new MachineLearningRequestDto(identification,publicationProduct.getCategory(), publicationProduct.getPrice(),publicationProduct.getCondition()));
         sendEmail(offers);
         return new OfferSuccesfullyDto("GOOD CREATE OFFERT");
     }

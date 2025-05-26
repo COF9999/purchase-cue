@@ -14,5 +14,6 @@ public record ProductDto(Long id,
                          String newFileName,
                          String description,
                          Long idUser,
-                         TokenDto tokenDto) {
+                         TokenDto tokenDto
+                        ) {
 }

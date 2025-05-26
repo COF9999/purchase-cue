@@ -8,7 +8,6 @@ import com.project.restful.dtos.counterOffer.CounterOfferUpdateDto;
 import com.project.restful.dtos.transaction.TransactionDto;
 import com.project.restful.dtos.transaction.TransactionalResponseDto;
 import com.project.restful.enums.StateObject;
-import com.project.restful.exeptions.BadRequestExeption;
 import com.project.restful.models.CounterOffer;
 import com.project.restful.models.Offers;
 import com.project.restful.models.Users;

@@ -2,12 +2,11 @@ package com.project.restful.services;
 
 import com.project.restful.dtos.counterOffer.CounterOfferResponseDto;
 import com.project.restful.dtos.offer.OfferResponse;
-import com.project.restful.dtos.product.ProductDto;
 import com.project.restful.dtos.product.ProductResponse;
 import com.project.restful.models.CounterOffer;
 import com.project.restful.models.Offers;
-import com.project.restful.services.interfacesCrud.ServiceCrud;
 import com.project.restful.services.interfacesLogic.CommonService;
+import com.project.restful.services.interfacesLogic.ProductService;
 import com.project.restful.services.interfacesLogic.PublicationService;
 import com.project.restful.services.interfacesLogic.UserService;
 import lombok.AllArgsConstructor;
@@ -22,7 +21,7 @@ public class CommonServiceImpl implements CommonService {
 
     private PublicationService publicationService;
 
-    private ServiceCrud<ProductResponse, ProductDto> productServiceCrud;
+    private ProductService productService;
 
     private UserService userService;
 
@@ -33,7 +32,7 @@ public class CommonServiceImpl implements CommonService {
         ProductResponse products = null;
         Float offerValue = null;
         if (offer.getProduct()!=null){
-            products = productServiceCrud.createResponse(offer.getProduct());
+            products = productService.createResponseFormal(offer.getProduct());
         }
 
         if (offer.getOfferValue()!=null){

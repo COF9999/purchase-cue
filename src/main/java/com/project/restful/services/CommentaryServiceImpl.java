@@ -1,19 +1,14 @@
 package com.project.restful.services;
 
 import com.project.restful.Repository.interfacesCrud.DaoCrud;
-import com.project.restful.Repository.interfacesLogic.UserDao;
 import com.project.restful.dtos.commentary.CommentaryResponseDto;
 import com.project.restful.dtos.commentary.CommnetaryDto;
 import com.project.restful.exeptions.BadRequestExeption;
 import com.project.restful.models.Transaction;
 import com.project.restful.models.Users;
 import com.project.restful.models.Valorations;
-import com.project.restful.security.JwtService;
 import com.project.restful.services.interfacesLogic.CommentaryService;
-import com.project.restful.services.interfacesLogic.OfferService;
 import com.project.restful.utils.Tools;
-import com.project.restful.utils.Validation;
-import io.jsonwebtoken.Claims;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -95,7 +90,7 @@ public class CommentaryServiceImpl implements CommentaryService {
     */
     @Override
     public CommentaryResponseDto convertToDto(Valorations valorations) {
-        return new CommentaryResponseDto(valorations.getId(),valorations.getComentary(),valorations.getValoration());
+        return new CommentaryResponseDto(valorations.getId(),valorations.getComentary(),valorations.getValoration(),valorations.getUsers().getName());
     }
 
 

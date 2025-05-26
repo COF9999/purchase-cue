@@ -40,7 +40,6 @@ public class CommandTransactionCounterOffer{
 
 
     public CounterOfferResponseDto updateState(CounterOfferUpdateDto counterOfferUpdateDto) {
-        System.out.println(counterOfferUpdateDto.idCounterOffer());
         return counterOfferDaoCrud.get(counterOfferUpdateDto.idCounterOffer())
                 .map(counterOffer -> updateStateCounterOffer(counterOffer,counterOfferUpdateDto.state()))
                 .map(this::convertToDto)
